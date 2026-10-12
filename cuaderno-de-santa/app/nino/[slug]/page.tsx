@@ -31,7 +31,8 @@ export default function DetalleNino() {
   if (!nino || !s) return <main>{volver}<ErrorCaja texto="Ese niño no está en la lista de Santa." /></main>;
 
   const t = TONOS[nino.tono];
-  const peque = nino.modo === 'peque';
+  const peque = false; // Anthony ve lo mismo que sus hermanos: puntos, racha, niveles
+  const noLee = nino.modo === 'peque';
   const grande = nino.edad >= 8;
   const { cfg, habitos, registros } = datos;
   const lejos = !nino.siempre_en_casa && !s.enCasaHoy;
@@ -68,7 +69,7 @@ export default function DetalleNino() {
           <span aria-hidden className="text-3xl">🎅</span>
           <span>{mensaje}</span>
         </p>
-        <SantaVoz texto={mensaje} grande={peque} />
+        <SantaVoz texto={mensaje} grande={noLee} />
       </section>
 
       <section className="card p-4" aria-label="El camino de tu trineo">
@@ -217,7 +218,7 @@ export default function DetalleNino() {
 
       <section className="card p-4" aria-label="Los niveles de Santa">
         <h2 className="mb-1 text-lg font-semibold">Los niveles de Santa</h2>
-        <p className="mb-3 text-sm text-muted">En Nochebuena, el regalo llega siempre. Lo que cambia es la sorpresa extra.</p>
+        <p className="mb-3 text-sm text-muted">Cada nivel trae una sorpresa distinta en Nochebuena. ¡Tú decides cuál!</p>
         <ul className="flex flex-col gap-2">
           {NIVELES.map((n) => {
             const actual = n.id === s.nivel.id;

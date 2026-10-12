@@ -34,7 +34,7 @@ export function fmtDia(iso: string, opts: Intl.DateTimeFormatOptions = { weekday
 
 /* ───────── Niveles ───────── */
 
-export type Nivel = { id: 'traviesillo' | 'aprendiz' | 'buena' | 'favorito'; nombre: string; emoji: string; desde: number };
+export type Nivel = { id: 'observacion' | 'traviesillo' | 'aprendiz' | 'buena' | 'favorito'; nombre: string; emoji: string; desde: number };
 
 export const NIVELES: Nivel[] = [
   { id: 'traviesillo', nombre: 'Traviesillo', emoji: '🪨', desde: 0 },
@@ -42,6 +42,9 @@ export const NIVELES: Nivel[] = [
   { id: 'buena', nombre: 'Lista Buena', emoji: '⭐', desde: 70 },
   { id: 'favorito', nombre: 'Favorito de Santa', emoji: '🎅', desde: 90 },
 ];
+
+/** Antes de la primera anotación Santa solo observa: no hay nivel que dar. No forma parte de la escalera. */
+export const OBSERVACION: Nivel = { id: 'observacion', nombre: 'En observación', emoji: '🔭', desde: 0 };
 
 /** Umbral (en % del máximo posible) donde termina el camino: el nivel más alto. */
 export const META_PCT = 90;
@@ -56,6 +59,7 @@ export function nivelPorPct(pct: number | null): Nivel {
 }
 
 export function siguienteNivel(n: Nivel): Nivel | null {
+  if (n.id === 'observacion') return NIVELES[1];
   const i = NIVELES.findIndex((v) => v.id === n.id);
   return NIVELES[i + 1] ?? null;
 }
@@ -66,13 +70,13 @@ export function veredicto(pct: number): Veredicto {
   const nivel = nivelPorPct(pct);
   switch (nivel.id) {
     case 'favorito':
-      return { nivel, titulo: 'Favorito de Santa', detalle: 'Regalo + sorpresa grande de los elfos' };
+      return { nivel, titulo: 'Favorito de Santa', detalle: 'Sorpresa grande de los elfos' };
     case 'buena':
-      return { nivel, titulo: 'Lista Buena', detalle: 'Regalo + un detalle extra' };
+      return { nivel, titulo: 'Lista Buena', detalle: 'Un detalle extra de los elfos' };
     case 'aprendiz':
-      return { nivel, titulo: 'Elfo aprendiz', detalle: 'Regalo + un trocito de carbón de chocolate' };
+      return { nivel, titulo: 'Elfo aprendiz', detalle: 'Un trocito de carbón de chocolate' };
     default:
-      return { nivel, titulo: 'Traviesillo', detalle: 'Regalo + carbón de chocolate bien grande' };
+      return { nivel, titulo: 'Traviesillo', detalle: 'Un carbón de chocolate bien grande' };
   }
 }
 
@@ -193,7 +197,8 @@ export function calcular(
   const progreso = meta > 0 ? clamp(total / meta) : 0;
   const ritmo = meta > 0 ? clamp((completos.length * maxDia * (RITMO_PCT / 100)) / meta) : 0;
 
-  const nivel = nivelPorPct(pct === null ? null : Math.min(pct, 100));
+  const sinAnotar = !registros.some((r) => r.nino_id === nino.id);
+  const nivel = sinAnotar ? OBSERVACION : nivelPorPct(pct === null ? null : Math.min(pct, 100));
   const siguiente = siguienteNivel(nivel);
   let faltan: number | null = null;
   if (siguiente && completos.length > 0) {
@@ -290,6 +295,7 @@ const FRASES: Record<string, string> = {
   paz: 'hoy hubo paz',
   cuarto: 'ordenaste tu cuarto',
   comer: 'comiste juicioso',
+  arena: 'limpiaste la arena de los gatos',
 };
 
 function pick<T>(arr: T[], seed: string): T {

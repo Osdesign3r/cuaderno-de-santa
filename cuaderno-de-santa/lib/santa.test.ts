@@ -106,6 +106,7 @@ test('racha: días buenos seguidos; hoy sin terminar no la rompe', () => {
 
 test('niveles y veredicto', () => {
   assert.equal(nivelPorPct(null).id, 'aprendiz');
+  assert.equal(calcular(chris, habitos, [], [], cfg, '2026-10-13').nivel.id, 'observacion');
   assert.equal(nivelPorPct(39).id, 'traviesillo');
   assert.equal(nivelPorPct(40).id, 'aprendiz');
   assert.equal(nivelPorPct(70).id, 'buena');

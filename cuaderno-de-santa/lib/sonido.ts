@@ -128,15 +128,18 @@ export function santaHabla(texto: string, alTerminar?: () => void) {
   s.cancel();
   const u = new SpeechSynthesisUtterance(`Ho, ho, ho. ${texto}`);
   const voces = s.getVoices().filter((v) => v.lang.toLowerCase().startsWith('es'));
+  const calidad = (x: SpeechSynthesisVoice) => /natural|neural|premium|enhanced|google|online/i.test(x.name);
   const v =
+    voces.find((x) => /es[-_](co|mx|us|419)/i.test(x.lang) && calidad(x)) ??
+    voces.find(calidad) ??
     voces.find((x) => /es[-_]co/i.test(x.lang)) ??
     voces.find((x) => /es[-_](mx|us|419)/i.test(x.lang)) ??
     voces.find((x) => /male|jorge|diego|pablo|carlos|juan|miguel/i.test(x.name)) ??
     voces[0];
   if (v) u.voice = v;
   u.lang = v?.lang ?? 'es-CO';
-  u.pitch = 0.45; // grave, de abuelo con barba
-  u.rate = 0.85;
+  u.pitch = 0.8; // un poco grave; más bajo suena a robot
+  u.rate = 0.92;
   u.onend = () => alTerminar?.();
   u.onerror = () => alTerminar?.();
   s.speak(u);

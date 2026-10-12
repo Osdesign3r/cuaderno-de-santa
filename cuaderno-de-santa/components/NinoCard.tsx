@@ -7,7 +7,7 @@ import { Avatar, NivelPill, StarsRow } from './ui';
 
 export function NinoCard({ nino, s }: { nino: Nino; s: Stats }) {
   const t = TONOS[nino.tono];
-  const peque = nino.modo === 'peque';
+  const peque = false; // Anthony ve lo mismo que sus hermanos
   const lejos = !nino.siempre_en_casa && !s.enCasaHoy;
 
   return (

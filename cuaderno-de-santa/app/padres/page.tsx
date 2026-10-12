@@ -189,7 +189,7 @@ function Panel({ token, onBloquear }: { token: string; onBloquear: (m?: string) 
   const diarios = lista.filter((h) => h.tipo === 'diario');
   const bonos = lista.filter((h) => h.tipo === 'bono');
   const atencion = lista.filter((h) => h.tipo === 'atencion');
-  const retro = lista.find((h) => h.tipo === 'retroceso');
+  const retros = lista.filter((h) => h.tipo === 'retroceso');
   const repara = lista.find((h) => h.tipo === 'reparacion');
   const porId = new Map(habitos.map((h) => [h.id, h]));
 
@@ -198,7 +198,6 @@ function Panel({ token, onBloquear }: { token: string; onBloquear: (m?: string) 
     .sort((a, b) => a.created_at.localeCompare(b.created_at));
   const hechos = new Set(delDia.filter((r) => ['diario', 'bono', 'atencion'].includes(r.tipo)).map((r) => r.habito_id));
   const nBonos = delDia.filter((r) => r.tipo === 'bono').length;
-  const nRetro = delDia.filter((r) => r.tipo === 'retroceso').length;
   const nRep = delDia.filter((r) => r.tipo === 'reparacion').length;
   const ptsDia = delDia.reduce((a, r) => a + r.puntos, 0);
 
@@ -350,21 +349,25 @@ function Panel({ token, onBloquear }: { token: string; onBloquear: (m?: string) 
         </Grupo>
       )}
 
-      {(retro || repara) && (
+      {(retros.length > 0 || repara) && (
         <Grupo titulo="Tropiezos">
           <div className="grid grid-cols-2 gap-2">
-            {retro && (
-              <button
-                onClick={() => void marcar(retro)}
-                disabled={bloqueado || pend.has(`${nino.slug}:${retro.clave}`)}
-                className="relative flex min-h-24 flex-col items-center justify-center gap-1 rounded-2xl bg-coal/15 p-3 text-center ring-2 ring-coal/40 active:scale-95 disabled:opacity-40"
-              >
-                <span className="text-3xl" aria-hidden>{retro.emoji}</span>
-                <span className="text-sm font-medium">{retro.nombre}</span>
-                <span className="text-xs text-coal">{puntosDe(retro, nino)} pts</span>
-                {nRetro > 0 && <span className="absolute right-2 top-2 rounded-full bg-coal px-2 text-xs font-bold text-night-900">×{nRetro}</span>}
-              </button>
-            )}
+            {retros.map((retro) => {
+              const n = delDia.filter((r) => r.habito_id === retro.id).length;
+              return (
+                <button
+                  key={retro.id}
+                  onClick={() => void marcar(retro)}
+                  disabled={bloqueado || pend.has(`${nino.slug}:${retro.clave}`)}
+                  className="relative flex min-h-24 flex-col items-center justify-center gap-1 rounded-2xl bg-coal/15 p-3 text-center ring-2 ring-coal/40 active:scale-95 disabled:opacity-40"
+                >
+                  <span className="text-3xl" aria-hidden>{retro.emoji}</span>
+                  <span className="text-sm font-medium">{retro.nombre}</span>
+                  <span className="text-xs text-coal">{puntosDe(retro, nino)} pts</span>
+                  {n > 0 && <span className="absolute right-2 top-2 rounded-full bg-coal px-2 text-xs font-bold text-night-900">×{n}</span>}
+                </button>
+              );
+            })}
             {repara && (
               <button
                 onClick={() => void marcar(repara)}
