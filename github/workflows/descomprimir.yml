@@ -2,7 +2,7 @@ name: Descomprimir proyecto
 on:
   push:
     paths:
-      - 'github/workflows/descomprimir.yml'
+      - '.github/workflows/descomprimir.yml'
   workflow_dispatch:
 permissions:
   contents: write
