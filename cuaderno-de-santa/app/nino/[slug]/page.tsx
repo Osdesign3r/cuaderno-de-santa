@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Countdown } from '@/components/Countdown';
+import { SantaVoz } from '@/components/SantaVoz';
 import { SledTrack } from '@/components/SledTrack';
 import { TONOS } from '@/components/tono';
 import { Avatar, Cargando, ErrorCaja, NivelPill, StarsRow } from '@/components/ui';
@@ -67,6 +68,7 @@ export default function DetalleNino() {
           <span aria-hidden className="text-3xl">🎅</span>
           <span>{mensaje}</span>
         </p>
+        <SantaVoz texto={mensaje} grande={peque} />
       </section>
 
       <section className="card p-4" aria-label="El camino de tu trineo">

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import '@fontsource-variable/fredoka';
 import './globals.css';
+import { MusicaBoton } from '@/components/MusicaBoton';
 import { RegistrarSW } from '@/components/RegistrarSW';
 import { Starfield } from '@/components/Starfield';
 
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <Starfield />
         <RegistrarSW />
+        <MusicaBoton />
         <div className="mx-auto w-full max-w-md px-4 pb-28 pt-[max(1.5rem,env(safe-area-inset-top))]">{children}</div>
       </body>
     </html>

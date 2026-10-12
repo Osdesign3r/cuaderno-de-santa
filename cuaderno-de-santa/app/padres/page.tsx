@@ -260,7 +260,7 @@ function Panel({ token, onBloquear }: { token: string; onBloquear: (m?: string) 
 
       <h1 className="text-3xl font-semibold">Panel de padres</h1>
 
-      {ajustes && <Ajustes token={token} onBloquear={onBloquear} />}
+      {ajustes && <Ajustes token={token} onBloquear={onBloquear} ninos={datos?.ninos ?? []} recargar={recargar} />}
 
       {antes && (
         <p className="card p-4 text-center text-gold-soft" role="status">
@@ -495,7 +495,66 @@ function Visitas({ nino, token, visitas, cfg, recargar, fallo }: { nino: Nino; t
   );
 }
 
-function Ajustes({ token, onBloquear }: { token: string; onBloquear: (m?: string) => void }) {
+const EMOJIS = ['🐻', '🦊', '🐰', '🦁', '🐯', '🐼', '🐨', '🐸', '🦄', '🐶', '🐱', '🐵', '🐧', '🦉', '🐲', '🦖', '🚀', '⚽', '👑', '🧚', '🦸', '🧙', '🤖', '🌟'];
+const TONOS_OP: { id: 'ambar' | 'turquesa' | 'rosa'; c: string }[] = [
+  { id: 'ambar', c: '#FFB84D' },
+  { id: 'turquesa', c: '#4CC9F0' },
+  { id: 'rosa', c: '#FF8FB8' },
+];
+
+function EditorAvatar({ nino, token, onBloquear, recargar }: { nino: Nino; token: string; onBloquear: (m?: string) => void; recargar: () => Promise<void> }) {
+  const [emoji, setEmoji] = useState(nino.emoji);
+  const [tono, setTono] = useState<Nino['tono']>(nino.tono);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [guardando, setGuardando] = useState(false);
+  const cambio = emoji !== nino.emoji || tono !== nino.tono;
+
+  async function guardar() {
+    setGuardando(true);
+    const r = await api.setAvatar(token, nino.id, emoji, tono);
+    setGuardando(false);
+    if (r.ok) {
+      await recargar();
+      return setMsg('¡Listo!');
+    }
+    if (r.error === 'sesion') return onBloquear(ERRORES.sesion);
+    setMsg(ERRORES[r.error ?? 'red'] ?? ERRORES.red);
+  }
+
+  return (
+    <div className="mb-4 border-b border-white/10 pb-4 last:mb-0 last:border-0 last:pb-0">
+      <div className="mb-2 flex items-center gap-3">
+        <Avatar emoji={emoji} tono={tono} size={56} />
+        <span className="text-lg font-semibold">{nino.nombre}</span>
+      </div>
+      <div className="flex flex-wrap gap-1.5" role="group" aria-label={`Ícono de ${nino.nombre}`}>
+        {EMOJIS.map((e) => (
+          <button key={e} onClick={() => { setEmoji(e); setMsg(null); }} aria-pressed={e === emoji} className={`h-12 w-12 rounded-xl text-2xl ${e === emoji ? 'bg-gold/30 ring-2 ring-gold' : 'bg-white/10'}`}>
+            {e}
+          </button>
+        ))}
+        <input
+          value={EMOJIS.includes(emoji) ? '' : emoji}
+          onChange={(e) => { const v = Array.from(e.target.value).slice(-2).join(''); if (v) { setEmoji(v); setMsg(null); } }}
+          placeholder="✏️"
+          aria-label="Otro emoji"
+          className="h-12 w-16 rounded-xl bg-white/10 text-center text-2xl placeholder:text-muted"
+        />
+      </div>
+      <div className="mt-2 flex gap-2" role="group" aria-label="Color">
+        {TONOS_OP.map((t) => (
+          <button key={t.id} onClick={() => { setTono(t.id); setMsg(null); }} aria-pressed={t.id === tono} aria-label={t.id} className={`h-10 w-10 rounded-full ${t.id === tono ? 'ring-2 ring-white' : ''}`} style={{ background: t.c }} />
+        ))}
+      </div>
+      {msg && <p className="mt-2 text-sm text-gold" role="status">{msg}</p>}
+      <button onClick={() => void guardar()} disabled={!cambio || guardando} className="mt-3 min-h-12 w-full rounded-2xl bg-gold font-semibold text-night-900 disabled:opacity-40">
+        Guardar a {nino.nombre}
+      </button>
+    </div>
+  );
+}
+
+function Ajustes({ token, onBloquear, ninos, recargar }: { token: string; onBloquear: (m?: string) => void; ninos: Nino[]; recargar: () => Promise<void> }) {
   const [nuevo, setNuevo] = useState('');
   const [m, setM] = useState<string | null>(null);
 
@@ -507,6 +566,13 @@ function Ajustes({ token, onBloquear }: { token: string; onBloquear: (m?: string
   }
 
   return (
+    <>
+    <section className="card p-4">
+      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted">Íconos de los niños</h2>
+      {ninos.map((n) => (
+        <EditorAvatar key={n.id + n.emoji + n.tono} nino={n} token={token} onBloquear={onBloquear} recargar={recargar} />
+      ))}
+    </section>
     <section className="card p-4">
       <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted">Cambiar PIN</h2>
       <input
@@ -525,5 +591,6 @@ function Ajustes({ token, onBloquear }: { token: string; onBloquear: (m?: string
       </button>
       <p className="mt-2 text-xs text-muted">Al cambiarlo se cierran todas las sesiones abiertas.</p>
     </section>
+    </>
   );
 }

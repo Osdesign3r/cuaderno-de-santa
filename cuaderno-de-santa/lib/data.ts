@@ -124,6 +124,8 @@ export const api = {
   quitar: (token: string, id: string) => rpc('santa_quitar', { p_token: token, p_registro: id }),
   guardarVisita: (token: string, nino: string, desde: string, hasta: string, nota?: string) =>
     rpc('santa_guardar_visita', { p_token: token, p_nino: nino, p_desde: desde, p_hasta: hasta, p_id: null, p_nota: nota ?? null }),
+  setAvatar: (token: string, nino: string, emoji: string, tono: string) =>
+    rpc('santa_set_avatar', { p_token: token, p_nino: nino, p_emoji: emoji, p_tono: tono }),
   borrarVisita: (token: string, id: string) => rpc('santa_borrar_visita', { p_token: token, p_id: id }),
 };
 
