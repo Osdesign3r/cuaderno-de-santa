@@ -112,6 +112,25 @@ a {
   animation: pop 0.28s ease-out;
 }
 
+
+/* ───── Duendes que vigilan (portada) ───── */
+.ojo { transform-origin: 50% 65%; animation: parpadeo 5.5s infinite; }
+.ojo:nth-of-type(2) { animation-delay: 0.08s; }
+.pupilas { transform: translate(var(--px, 0px), var(--py, 0px)); transition: transform 0.12s ease-out; animation: mirar 8s ease-in-out infinite; }
+[data-sigue='1'] .pupilas { animation: none; }
+@keyframes parpadeo { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.08); } }
+@keyframes mirar {
+  0%, 12% { transform: translate(0, 0); }
+  22%, 38% { transform: translate(-8px, 1px); }
+  48%, 62% { transform: translate(8px, -2px); }
+  72%, 84% { transform: translate(0, 5px); }
+  100% { transform: translate(0, 0); }
+}
+.mensaje-duendes { animation: aparece 0.6s ease-out; }
+@keyframes aparece { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.cuenta { text-shadow: 0 0 28px rgba(255, 200, 87, 0.55); animation: late 3.2s ease-in-out infinite; }
+@keyframes late { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

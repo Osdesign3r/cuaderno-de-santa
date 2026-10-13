@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Countdown } from '@/components/Countdown';
+import { Vigilancia } from '@/components/Vigilancia';
 import { NinoCard } from '@/components/NinoCard';
 import { Cargando, ErrorCaja } from '@/components/ui';
 import { useSanta, useStats } from '@/lib/data';
@@ -17,14 +17,16 @@ export default function Inicio() {
         <h1 className="mt-1 text-4xl font-semibold leading-tight">
           El Cuaderno <span className="text-gold">de Santa</span>
         </h1>
-        {datos && hoy && <Countdown hoy={hoy} cfg={datos.cfg} />}
+        
       </header>
+
+      {datos && hoy && <Vigilancia hoy={hoy} cfg={datos.cfg} />}
 
       {error && !datos && <ErrorCaja texto={error} onReintentar={() => void recargar()} />}
       {!datos && !error && <Cargando />}
 
       {datos && hoy && (
-        <section className="mt-8 flex flex-col gap-4" aria-label="Los niños en la lista de Santa">
+        <section className="mt-6 flex flex-col gap-4" aria-label="Los niños en la lista de Santa">
           {datos.ninos.map((n) => (stats[n.slug] ? <NinoCard key={n.id} nino={n} s={stats[n.slug]} /> : null))}
           {error && <p className="text-center text-sm text-coal">{error}</p>}
         </section>
