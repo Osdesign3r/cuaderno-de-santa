@@ -109,7 +109,7 @@ export type Stats = {
   total: number;
   progreso: number; // 0..1 sobre el camino
   ritmo: number; // 0..1 posición de la estrella fantasma
-  pct: number | null; // % del máximo posible en días ya completados
+  pct: number | null; // % del máximo posible en días ya completados (más hoy, si hubo tropiezo)
   nivel: Nivel;
   siguiente: Nivel | null;
   faltanParaSiguiente: number | null;
@@ -189,7 +189,12 @@ export function calcular(
 
   const ayer = addDays(hoy, -1);
   const hastaAyer = ayer < cfg.inicio ? 0 : (acum.get(ayer > cfg.fin ? cfg.fin : ayer) ?? 0);
-  const pct = completos.length > 0 && maxDia > 0 ? (hastaAyer / (completos.length * maxDia)) * 100 : null;
+  // Un tropiezo se nota al instante: hoy entra a la cuenta aunque el día no haya terminado
+  // (si no, el niño seguiría "Elfo aprendiz" con 0 puntos y no pasaría nada). Sin tropiezo, hoy espera a cerrarse.
+  const hoyConRetro = dias.some((d) => d.fecha === hoy && d.retro > 0);
+  const diasCuenta = completos.length + (hoyConRetro ? 1 : 0);
+  const ptsCuenta = hoyConRetro ? (acum.get(hoy) ?? total) : hastaAyer;
+  const pct = diasCuenta > 0 && maxDia > 0 ? (ptsCuenta / (diasCuenta * maxDia)) * 100 : null;
   const pctFinal = disponibles.length > 0 && maxDia > 0 ? (total / (disponibles.length * maxDia)) * 100 : 0;
 
   const meta = disponibles.length * maxDia * (META_PCT / 100);
@@ -201,8 +206,8 @@ export function calcular(
   const nivel = sinAnotar ? OBSERVACION : nivelPorPct(pct === null ? null : Math.min(pct, 100));
   const siguiente = siguienteNivel(nivel);
   let faltan: number | null = null;
-  if (siguiente && completos.length > 0) {
-    faltan = Math.max(0, Math.ceil((completos.length * maxDia * siguiente.desde) / 100 - hastaAyer));
+  if (siguiente && diasCuenta > 0) {
+    faltan = Math.max(0, Math.ceil((diasCuenta * maxDia * siguiente.desde) / 100 - ptsCuenta));
   }
 
   // Racha: días buenos consecutivos (solo días en casa). Hoy no rompe la racha si aún no termina.

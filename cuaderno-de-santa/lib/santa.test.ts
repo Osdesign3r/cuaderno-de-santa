@@ -120,3 +120,15 @@ test('antes de la temporada: sin puntos, sin porcentaje', () => {
   assert.equal(s.pct, null);
   assert.equal(s.diasCompletos, 0);
 });
+
+test('un tropiezo hoy se refleja al instante: 2 pts y berrinche = 0 pts = Traviesillo', () => {
+  const comer = habitos.find((h) => h.clave === 'comer')!;
+  const bern = habitos.find((h) => h.tipo === 'retroceso')!;
+  const mk = (h: typeof comer, tipo: string, puntos: number, t: string) =>
+    ({ id: t, nino_id: chris.id, habito_id: h.id, tipo, puntos, fecha: '2026-10-12', nota: null, created_at: `2026-10-12T${t}:00Z` }) as never;
+  const sinTropiezo = calcular(chris, habitos, [mk(comer, 'diario', 2, '10')], [], cfg, '2026-10-12');
+  assert.equal(sinTropiezo.nivel.id, 'aprendiz'); // sin tropiezo, hoy espera a cerrar
+  const con = calcular(chris, habitos, [mk(comer, 'diario', 2, '10'), mk(bern, 'retroceso', -3, '11')], [], cfg, '2026-10-12');
+  assert.equal(con.total, 0);
+  assert.equal(con.nivel.id, 'traviesillo');
+});
