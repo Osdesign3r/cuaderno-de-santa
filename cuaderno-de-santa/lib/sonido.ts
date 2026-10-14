@@ -117,7 +117,7 @@ export function detenerMusica() {
   maestro = null;
 }
 
-/** Voz de Santa: síntesis de voz del propio celular (español, grave y pausada). */
+/** Voz del duende: síntesis de voz del propio celular (español, aguda y alegre). */
 export function vozDisponible() {
   return typeof window !== 'undefined' && 'speechSynthesis' in window;
 }
@@ -126,7 +126,7 @@ export function santaHabla(texto: string, alTerminar?: () => void) {
   if (!vozDisponible()) return false;
   const s = window.speechSynthesis;
   s.cancel();
-  const u = new SpeechSynthesisUtterance(`Ho, ho, ho. ${texto}`);
+  const u = new SpeechSynthesisUtterance(texto);
   const voces = s.getVoices().filter((v) => v.lang.toLowerCase().startsWith('es'));
   const calidad = (x: SpeechSynthesisVoice) => /natural|neural|premium|enhanced|google|online/i.test(x.name);
   const v =
@@ -138,8 +138,8 @@ export function santaHabla(texto: string, alTerminar?: () => void) {
     voces[0];
   if (v) u.voice = v;
   u.lang = v?.lang ?? 'es-CO';
-  u.pitch = 0.8; // un poco grave; más bajo suena a robot
-  u.rate = 0.92;
+  u.pitch = 1.35; // agudito y juguetón: un duende, no Santa
+  u.rate = 1.0;
   u.onend = () => alTerminar?.();
   u.onerror = () => alTerminar?.();
   s.speak(u);

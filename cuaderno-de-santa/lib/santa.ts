@@ -309,40 +309,43 @@ function pick<T>(arr: T[], seed: string): T {
   return arr[h % arr.length];
 }
 
+/** Mensajes del duende de Santa (habla en 3.ª persona de Santa; no hace falta que "sea" Santa). */
 export function mensajeSanta(nino: Nino, s: Stats, habitos: Habito[], hoy: string, cfg: Config): string {
   const seed = `${nino.slug}${hoy}`;
   const nombre = nino.nombre;
-  if (hoy < cfg.inicio) return `¡Hola, ${nombre}! Mañana empiezo a anotar. Los elfos ya afilaron los lápices.`;
-  if (hoy > cfg.fin) return `¡Feliz Navidad, ${nombre}! Gracias por este viaje al Polo.`;
+  if (hoy < cfg.inicio) return `¡Hola, ${nombre}! Soy un duende de Santa. Mañana empezamos a anotar: ya afilamos los lápices.`;
+  if (hoy > cfg.fin) return `¡Feliz Navidad, ${nombre}! Los duendes te agradecen este viaje al Polo.`;
   if (!s.enCasaHoy && !nino.siempre_en_casa) {
     const v = s.proximaVisita;
     return v
-      ? `${nombre}, te espero el ${fmtDia(v.desde, { weekday: 'long', day: 'numeric', month: 'long' })}. Mientras tanto, ¡cuéntame por teléfono qué estás leyendo!`
-      : `${nombre}, Santa te tiene presente aunque estés lejos.`;
+      ? `${nombre}, te esperamos el ${fmtDia(v.desde, { weekday: 'long', day: 'numeric', month: 'long' })}. Mientras tanto, ¡cuéntale a papá por teléfono qué estás leyendo!`
+      : `${nombre}, los duendes te tienen presente aunque estés lejos.`;
   }
   if (s.retrocesoHoy && !s.reparadoHoy) {
     return pick(
       [
-        `${nombre}, hoy hubo un tropiezo y el trineo dio marcha atrás. Una disculpa o ayudar con algo lo arregla.`,
-        `Los elfos vieron un berrinche, ${nombre}. Pasa, a todos nos pasa. Arregla las cosas y el carbón se va.`,
+        `${nombre}, hoy vimos un tropiezo y el trineo dio marcha atrás. Una disculpa o ayudar con algo lo arregla.`,
+        `Los duendes lo vieron, ${nombre}. Pasa, pero tiene consecuencias. Arregla las cosas y el carbón se va.`,
+        `Psst, ${nombre}: hoy el cuaderno anotó algo que no le gustó a Santa. Todavía puedes remediarlo.`,
       ],
       seed,
     );
   }
   if (s.reparadoHoy) {
-    return `${nombre}, Santa vio cómo arreglaste las cosas. Eso lo hacen solo los grandes.`;
+    return `${nombre}, vimos cómo arreglaste las cosas. Eso lo hacen solo los grandes.`;
   }
   const hechos = habitos.filter((h) => s.hoyHechos.has(h.id));
   const diarios = hechos.filter((h) => h.tipo === 'diario' && FRASES[h.clave]);
   const bonos = hechos.filter((h) => h.tipo === 'bono');
-  if (bonos.length > 0) return `¡Un ayudante de Santa! Los elfos anotaron tu ayuda de hoy, ${nombre}.`;
-  if (diarios.length >= 4) return `¡Casi perfecto, ${nombre}! Santa vio que ${FRASES[diarios[0].clave]} y mucho más.`;
-  if (diarios.length > 0) return `Santa vio que ${FRASES[diarios[diarios.length - 1].clave]}, ${nombre}. ¡Sigue así!`;
+  if (bonos.length > 0) return `¡Un ayudante de Santa! Anotamos tu ayuda de hoy, ${nombre}.`;
+  if (diarios.length >= 4) return `¡Casi perfecto, ${nombre}! Vimos que ${FRASES[diarios[0].clave]} y mucho más.`;
+  if (diarios.length > 0) return `Vimos que ${FRASES[diarios[diarios.length - 1].clave]}, ${nombre}. ¡Sigue así!`;
   if (s.racha >= 3) return `${s.racha} días buenos seguidos, ${nombre}. El trineo va volando.`;
   return pick(
     [
-      `Los elfos están atentos, ${nombre}. Hoy hay estrellas esperando a que las ganes.`,
-      `Buenos días desde el Polo, ${nombre}. Hoy Santa quiere verte brillar.`,
+      `Los duendes están atentos, ${nombre}. Hoy hay estrellas esperando a que las ganes.`,
+      `Buenos días desde el Polo, ${nombre}. Hoy queremos verte brillar.`,
+      `Estamos mirando, ${nombre}… y nos encanta cuando ayudas sin que te lo pidan.`,
     ],
     seed,
   );

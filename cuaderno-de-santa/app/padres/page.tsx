@@ -197,7 +197,9 @@ function Panel({ token, onBloquear }: { token: string; onBloquear: (m?: string) 
     .filter((r) => r.nino_id === nino.id && r.fecha === fecha)
     .sort((a, b) => a.created_at.localeCompare(b.created_at));
   const hechos = new Set(delDia.filter((r) => ['diario', 'bono', 'atencion'].includes(r.tipo)).map((r) => r.habito_id));
-  const nBonos = delDia.filter((r) => r.tipo === 'bono').length;
+  const ollas = bonos.find((h) => h.clave === 'ollas');
+  const loza = bonos.find((h) => h.clave === 'loza');
+  const nBonos = delDia.filter((r) => r.tipo === 'bono' && r.habito_id !== ollas?.id).length;
   const nRep = delDia.filter((r) => r.tipo === 'reparacion').length;
   const ptsDia = delDia.reduce((a, r) => a + r.puntos, 0);
 
@@ -215,6 +217,7 @@ function Panel({ token, onBloquear }: { token: string; onBloquear: (m?: string) 
     else {
       navigator.vibrate?.(12);
       if (r.accion === 'quitado') setAviso({ t: `${h.emoji} Quitado`, mal: false });
+      else if (r.primero) setAviso({ t: `⚡ ¡${nino.nombre} fue el primero! +1 extra`, mal: false });
     }
     await recargar();
     setPend((p) => {
@@ -334,7 +337,7 @@ function Panel({ token, onBloquear }: { token: string; onBloquear: (m?: string) 
       <Grupo titulo={`Ayudante de Santa · ${nBonos}/${cfg.maxBonosDia}`}>
         <div className="grid grid-cols-2 gap-2">
           {bonos.map((h) => (
-            <ChipH key={h.id} h={h} nino={nino} hecho={hechos.has(h.id)} deshabilitado={bloqueado || (nBonos >= cfg.maxBonosDia && !hechos.has(h.id))} cargando={pend.has(`${nino.slug}:${h.clave}`)} onClick={() => void marcar(h)} color={t.c} soft={t.soft} />
+            <ChipH key={h.id} h={h} nino={nino} hecho={hechos.has(h.id)} deshabilitado={bloqueado || (h.clave === 'ollas' ? !(loza && hechos.has(loza.id)) : nBonos >= cfg.maxBonosDia && !hechos.has(h.id))} cargando={pend.has(`${nino.slug}:${h.clave}`)} onClick={() => void marcar(h)} color={t.c} soft={t.soft} />
           ))}
         </div>
       </Grupo>
@@ -395,7 +398,7 @@ function Panel({ token, onBloquear }: { token: string; onBloquear: (m?: string) 
               return (
                 <li key={r.id} className="flex items-center gap-3 rounded-2xl bg-white/5 px-3 py-2">
                   <span aria-hidden className="text-xl">{h?.emoji}</span>
-                  <span className="flex-1 text-sm">{h ? nombreHabito(h, nino) : '—'}</span>
+                  <span className="flex-1 text-sm">{h ? nombreHabito(h, nino) : '—'}{r.nota === 'primero' && <span title="Fue el primero" aria-label="primero del día"> ⚡</span>}</span>
                   <span className={`text-sm font-semibold ${r.puntos < 0 ? 'text-coal' : 'text-ok'}`}>{r.puntos > 0 ? '+' : ''}{r.puntos}</span>
                   <span className="text-xs text-muted">{hora(r.created_at)}</span>
                   <button onClick={() => void quitar(r)} aria-label={`Quitar ${h?.nombre ?? 'registro'}`} disabled={pend.has(`q:${r.id}`)} className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-lg active:scale-90">×</button>

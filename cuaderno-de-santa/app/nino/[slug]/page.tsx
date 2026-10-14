@@ -45,7 +45,7 @@ export default function DetalleNino() {
   const ultimos = [...misRegistros].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 6);
   const semana = s.dias.filter((d) => d.fecha <= hoy && d.fecha >= addDays(hoy, -6));
   const buenosSemana = semana.filter((d) => d.bueno).length;
-  const bonosSemana = misRegistros.filter((r) => r.tipo === 'bono' && r.fecha >= addDays(hoy, -6) && r.fecha <= hoy).length;
+  const bonosSemana = misRegistros.filter((r) => r.tipo === 'bono' && porId.get(r.habito_id)?.clave !== 'ollas' && r.fecha >= addDays(hoy, -6) && r.fecha <= hoy).length;
   const ganadas = s.insignias.filter((i) => i.ganada);
   const mensaje = mensajeSanta(nino, s, habitos, hoy, cfg);
   const finalDia = hoy >= cfg.fin;
@@ -64,9 +64,9 @@ export default function DetalleNino() {
         </div>
       </header>
 
-      <section className="card relative p-4" style={{ borderColor: t.soft }} aria-label="Mensaje de Santa">
+      <section className="card relative p-4" style={{ borderColor: t.soft }} aria-label="Mensaje del duende">
         <p className="flex gap-3 text-lg leading-snug">
-          <span aria-hidden className="text-3xl">🎅</span>
+          <span aria-hidden className="text-3xl">🧝</span>
           <span>{mensaje}</span>
         </p>
         <SantaVoz texto={mensaje} grande={noLee} />
@@ -206,7 +206,7 @@ export default function DetalleNino() {
               return (
                 <li key={r.id} className="flex items-center gap-3 rounded-2xl bg-white/5 px-3 py-2">
                   <span aria-hidden className="text-2xl">{h.emoji}</span>
-                  <span className="flex-1 text-sm">{nombreHabito(h, nino)}</span>
+                  <span className="flex-1 text-sm">{nombreHabito(h, nino)}{r.nota === 'primero' && <span title="Fue el primero" aria-label="primero del día"> ⚡</span>}</span>
                   {!peque && <span className={`text-sm font-semibold ${neg ? 'text-coal' : 'text-ok'}`}>{neg ? '' : '+'}{r.puntos}</span>}
                   <span className="w-12 text-right text-xs text-muted">{cuando(r.fecha)}</span>
                 </li>
@@ -218,7 +218,7 @@ export default function DetalleNino() {
 
       <section className="card p-4" aria-label="Los niveles de Santa">
         <h2 className="mb-1 text-lg font-semibold">Los niveles de Santa</h2>
-        <p className="mb-3 text-sm text-muted">Cada nivel trae una sorpresa distinta en Nochebuena. ¡Tú decides cuál!</p>
+        <p className="mb-3 text-sm text-muted">Cada nivel trae una sorpresa distinta en Nochebuena. ¡Tú decides cuál! El % se calcula sobre el máximo de las tareas diarias; las ayudas extra y los ⚡ suman por encima.</p>
         <ul className="flex flex-col gap-2">
           {NIVELES.map((n) => {
             const actual = n.id === s.nivel.id;

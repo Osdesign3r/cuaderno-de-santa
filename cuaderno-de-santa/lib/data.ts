@@ -103,7 +103,7 @@ export function useStats(datos: Datos | null, hoy: string): Record<string, Stats
 
 /* ───────── Escritura (solo con sesión de padres; la validación real vive en la base) ───────── */
 
-export type Resp = { ok: boolean; error?: string; token?: string; restantes?: number; hasta?: string; accion?: string };
+export type Resp = { ok: boolean; error?: string; token?: string; restantes?: number; hasta?: string; accion?: string; primero?: boolean };
 
 async function rpc(fn: string, args?: Record<string, unknown>): Promise<Resp> {
   const { data, error } = await sb.rpc(fn, args);
@@ -136,7 +136,8 @@ export const ERRORES: Record<string, string> = {
   fuera_de_temporada: 'Ese día está fuera de la temporada de Santa.',
   no_en_casa: 'Ese niño no está en casa ese día. Marca la visita primero.',
   no_aplica: 'Ese hábito no aplica para este niño.',
-  tope_bonos: 'Máximo 2 ayudas extra por día.',
+  tope_bonos: 'Ya llegó al máximo de ayudas extra de hoy.',
+  requiere_loza: 'El plus de ollas va junto con “Ayudar con la loza”: anota la loza primero.',
   hubo_retroceso: 'Hubo un tropiezo hoy: "Día en paz" no se puede marcar.',
   nada_que_reparar: 'No hay ningún tropiezo reciente que reparar.',
   formato: 'El PIN debe tener exactamente 6 números.',

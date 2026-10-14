@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { callarSanta, santaHabla, vozDisponible } from '@/lib/sonido';
 
-/** Botón grande para quien no lee (Anthony): Santa le dice el mensaje en voz alta. */
+/** Botón grande para quien no lee (Anthony): el duende le dice el mensaje en voz alta. */
 export function SantaVoz({ texto, grande }: { texto: string; grande?: boolean }) {
   const [hablando, setHablando] = useState(false);
   const [ok, setOk] = useState(false);
@@ -27,11 +27,11 @@ export function SantaVoz({ texto, grande }: { texto: string; grande?: boolean })
           santaHabla(texto, () => setHablando(false));
         }
       }}
-      aria-label={hablando ? 'Callar a Santa' : 'Escuchar a Santa'}
+      aria-label={hablando ? 'Callar al duende' : 'Escuchar al duende'}
       className={`mt-3 flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gold font-semibold text-night-900 active:scale-95 ${grande ? 'text-xl' : ''}`}
     >
-      <span aria-hidden className={hablando ? 'motion-safe:animate-pulse' : ''}>{hablando ? '🔊' : '🎅'}</span>
-      {hablando ? 'Santa está hablando…' : 'Escuchar a Santa'}
+      <span aria-hidden className={hablando ? 'motion-safe:animate-pulse' : ''}>{hablando ? '🔊' : '🧝'}</span>
+      {hablando ? 'El duende está hablando…' : 'Escuchar al duende'}
     </button>
   );
 }
