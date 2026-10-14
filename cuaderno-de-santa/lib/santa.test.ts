@@ -160,3 +160,15 @@ test('3 tropiezos en 14 días bajan el techo a Elfo aprendiz', () => {
   assert.equal(s.nivel.id, 'aprendiz');
   assert.equal(s.tope?.motivo, 'varios');
 });
+
+test('hoy cuenta desde la primera anotación: marcar una tarea nunca baja el %', () => {
+  const cuatro = (nino: Nino, f: string) => ['cama', 'taza', 'cuarto', 'comer'].map((c) => R(nino, c, f));
+  const cerrados = eachDay('2026-10-12', '2026-10-31').flatMap((d) => cuatro(chris, d)); // 80% cada día
+  const antes = calcular(chris, habitos, cerrados, [], cfg, '2026-11-01');
+  const despues = calcular(chris, habitos, [...cerrados, R(chris, 'cama', '2026-11-01')], [], cfg, '2026-11-01');
+  assert.ok(antes.pct !== null && despues.pct !== null);
+  assert.ok(despues.pct! > antes.pct!);
+  // y una ayuda extra también suma
+  const bono = calcular(chris, habitos, [...cerrados, R(chris, 'loza', '2026-11-01')], [], cfg, '2026-11-01');
+  assert.ok(bono.pct! > antes.pct!);
+});

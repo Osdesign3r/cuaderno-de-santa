@@ -111,7 +111,7 @@ export default function DetalleNino() {
           <NivelPill nivel={s.nivel} tono={nino.tono} />
         </div>
         {s.pct === null ? (
-          <p className="text-sm text-muted">Tu nivel aparece cuando termine tu primer día. ¡Hoy se empieza a contar!</p>
+          <p className="text-sm text-muted">Tu nivel aparece cuando completes tu primer día de tareas. ¡Cada tarea cuenta!</p>
         ) : (
           <>
             <div className="relative h-4 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(Math.min(s.pct, 100))} aria-label="Nivel de las últimas dos semanas">
@@ -137,7 +137,7 @@ export default function DetalleNino() {
                 </p>
               )
             )}
-            <p className="mt-2 text-center text-xs text-muted">Lo que hagas hoy cuenta durante 2 semanas.</p>
+            <p className="mt-2 text-center text-xs text-muted">Lo de hoy ya cuenta (se confirma al cerrar el día) y pesa durante 2 semanas.</p>
           </>
         )}
       </section>

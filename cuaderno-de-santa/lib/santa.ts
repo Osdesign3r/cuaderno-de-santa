@@ -113,7 +113,7 @@ export type Stats = {
   total: number;
   progreso: number; // 0..1 sobre el camino
   ritmo: number; // 0..1 posición de la estrella fantasma
-  pct: number | null; // % del máximo posible en las últimas 2 semanas (más hoy, si hubo tropiezo)
+  pct: number | null; // % del máximo posible en las últimas 2 semanas, incluyendo lo de hoy hasta ahora
   nivel: Nivel;
   siguiente: Nivel | null;
   faltanParaSiguiente: number | null;
@@ -198,13 +198,22 @@ export function calcular(
   const hastaAyer = ayer < cfg.inicio ? 0 : (acum.get(ayer > cfg.fin ? cfg.fin : ayer) ?? 0);
   // El nivel mide las últimas 2 semanas (no toda la temporada): así cada día pesa igual en octubre que en diciembre
   // y un mal día se nota (y se puede remontar). El trineo, en cambio, sí es el viaje completo.
-  // Un tropiezo de hoy entra de inmediato; sin tropiezo, hoy espera a cerrarse.
+  // Hoy cuenta desde la primera anotación, para que el niño vea si avanza: se mide contra lo ya hecho
+  // (marcar algo nunca baja el %). Con un tropiezo, hoy se mide contra el día completo. Al cerrar el día se confirma.
+  const hoyRegs = porFecha.get(hoy) ?? [];
   const hoyConRetro = dias.some((d) => d.fecha === hoy && d.retro > 0);
-  const ventana = [...completos, ...(hoyConRetro ? [hoy] : [])].slice(-VENTANA_DIAS);
+  const hoyCuenta = hoyRegs.length > 0;
+  const cerrados = completos.slice(-(hoyCuenta ? VENTANA_DIAS - 1 : VENTANA_DIAS));
   const sumaDia = (d: string) => (porFecha.get(d) ?? []).reduce((a, r) => a + r.puntos, 0);
-  const ptsCuenta = ventana.reduce((a, d) => a + sumaDia(d), 0);
-  const diasCuenta = ventana.length;
-  const pct = diasCuenta > 0 && maxDia > 0 ? Math.max(0, (ptsCuenta / (diasCuenta * maxDia)) * 100) : null;
+  const hechoHoyMax = hoyRegs.reduce((a, r) => {
+    const h = porId.get(r.habito_id);
+    return h && h.tipo === 'diario' ? a + puntosDe(h, nino) : a;
+  }, 0);
+  const ptsCuenta = cerrados.reduce((a, d) => a + sumaDia(d), 0) + (hoyCuenta ? sumaDia(hoy) : 0);
+  const denCuenta = cerrados.length * maxDia + (hoyConRetro ? maxDia : hoyCuenta ? hechoHoyMax : 0);
+  const diasCuenta = cerrados.length + (hoyCuenta ? 1 : 0);
+  // Con menos de un día completo de evidencia todavía no hay nivel que medir.
+  const pct = maxDia > 0 && denCuenta >= maxDia ? Math.max(0, (ptsCuenta / denCuenta) * 100) : null;
   const pctFinal = disponibles.length > 0 && maxDia > 0 ? (total / (disponibles.length * maxDia)) * 100 : 0;
 
   const meta = disponibles.length * maxDia * (META_PCT / 100);
@@ -233,8 +242,8 @@ export function calcular(
   }
   const siguiente = siguienteNivel(nivel);
   let faltan: number | null = null;
-  if (siguiente && diasCuenta > 0 && !tope) {
-    faltan = Math.max(0, Math.ceil((diasCuenta * maxDia * siguiente.desde) / 100 - ptsCuenta));
+  if (siguiente && pct !== null && !tope) {
+    faltan = Math.max(0, Math.ceil((denCuenta * siguiente.desde) / 100 - ptsCuenta));
   }
 
   // Racha: días buenos consecutivos (solo días en casa). Hoy no rompe la racha si aún no termina.
