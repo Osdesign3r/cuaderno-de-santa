@@ -132,3 +132,31 @@ test('un tropiezo hoy se refleja al instante: 2 pts y berrinche = 0 pts = Travie
   assert.equal(con.total, 0);
   assert.equal(con.nivel.id, 'traviesillo');
 });
+
+test('el nivel mide 14 días: lo viejo se olvida y cada día pesa igual', () => {
+  const regs = eachDay('2026-10-12', '2026-10-31').flatMap((d) => diaCompleto(chris, d));
+  // 14 días de nada después de 20 perfectos: antes seguía "Elfo aprendiz" por el acumulado
+  const s = calcular(chris, habitos, regs, [], cfg, '2026-11-15');
+  assert.equal(s.nivel.id, 'traviesillo');
+  assert.equal(s.diasVentana, 14);
+});
+
+test('un tropiezo pone techo al nivel 7 días aunque el % sea alto', () => {
+  const dias = (hasta: string) => eachDay('2026-10-12', hasta).flatMap((d) => diaCompleto(chris, d));
+  const tropiezo = R(chris, 'berrinche', '2026-10-30');
+  const a = calcular(chris, habitos, [...dias('2026-11-04'), tropiezo], [], cfg, '2026-11-05');
+  assert.equal(a.nivel.id, 'buena'); // ~98% pero con tropiezo reciente
+  assert.equal(a.tope?.motivo, 'reciente');
+  assert.equal(a.tope?.diasRestantes, 1);
+  const b = calcular(chris, habitos, [...dias('2026-11-05'), tropiezo], [], cfg, '2026-11-06');
+  assert.equal(b.nivel.id, 'favorito'); // pasaron 7 días
+  assert.equal(b.tope, null);
+});
+
+test('3 tropiezos en 14 días bajan el techo a Elfo aprendiz', () => {
+  const dias = eachDay('2026-10-12', '2026-11-04').flatMap((d) => diaCompleto(chris, d));
+  const tres = ['2026-10-26', '2026-10-30', '2026-11-02'].map((f) => R(chris, 'berrinche', f));
+  const s = calcular(chris, habitos, [...dias, ...tres], [], cfg, '2026-11-05');
+  assert.equal(s.nivel.id, 'aprendiz');
+  assert.equal(s.tope?.motivo, 'varios');
+});

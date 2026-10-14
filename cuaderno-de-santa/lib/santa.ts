@@ -47,6 +47,10 @@ export const NIVELES: Nivel[] = [
 export const OBSERVACION: Nivel = { id: 'observacion', nombre: 'En observación', emoji: '🔭', desde: 0 };
 
 /** Umbral (en % del máximo posible) donde termina el camino: el nivel más alto. */
+/** Días que miden el nivel, y días que un tropiezo pone techo (Favorito de Santa) al nivel. */
+export const VENTANA_DIAS = 14;
+export const TOPE_DIAS = 7;
+
 export const META_PCT = 90;
 /** Ritmo que marca la estrella fantasma: el umbral de "Lista Buena". */
 export const RITMO_PCT = 70;
@@ -109,7 +113,7 @@ export type Stats = {
   total: number;
   progreso: number; // 0..1 sobre el camino
   ritmo: number; // 0..1 posición de la estrella fantasma
-  pct: number | null; // % del máximo posible en días ya completados (más hoy, si hubo tropiezo)
+  pct: number | null; // % del máximo posible en las últimas 2 semanas (más hoy, si hubo tropiezo)
   nivel: Nivel;
   siguiente: Nivel | null;
   faltanParaSiguiente: number | null;
@@ -122,6 +126,9 @@ export type Stats = {
   reparadoHoy: boolean;
   dias: DiaInfo[];
   insignias: Insignia[];
+  diasVentana: number; // días que miden el nivel (hasta 14)
+  tope: { motivo: 'reciente' | 'varios'; diasRestantes: number } | null; // techo por tropiezos recientes
+  pctNochebuena: number; // veredicto si hoy fuera Nochebuena: mitad temporada completa, mitad últimas 2 semanas
   pctFinal: number; // % si la temporada terminara hoy (usa todos los días disponibles)
   hoyHechos: Set<string>; // ids de hábitos registrados hoy
   bonosHoy: number;
@@ -189,12 +196,15 @@ export function calcular(
 
   const ayer = addDays(hoy, -1);
   const hastaAyer = ayer < cfg.inicio ? 0 : (acum.get(ayer > cfg.fin ? cfg.fin : ayer) ?? 0);
-  // Un tropiezo se nota al instante: hoy entra a la cuenta aunque el día no haya terminado
-  // (si no, el niño seguiría "Elfo aprendiz" con 0 puntos y no pasaría nada). Sin tropiezo, hoy espera a cerrarse.
+  // El nivel mide las últimas 2 semanas (no toda la temporada): así cada día pesa igual en octubre que en diciembre
+  // y un mal día se nota (y se puede remontar). El trineo, en cambio, sí es el viaje completo.
+  // Un tropiezo de hoy entra de inmediato; sin tropiezo, hoy espera a cerrarse.
   const hoyConRetro = dias.some((d) => d.fecha === hoy && d.retro > 0);
-  const diasCuenta = completos.length + (hoyConRetro ? 1 : 0);
-  const ptsCuenta = hoyConRetro ? (acum.get(hoy) ?? total) : hastaAyer;
-  const pct = diasCuenta > 0 && maxDia > 0 ? (ptsCuenta / (diasCuenta * maxDia)) * 100 : null;
+  const ventana = [...completos, ...(hoyConRetro ? [hoy] : [])].slice(-VENTANA_DIAS);
+  const sumaDia = (d: string) => (porFecha.get(d) ?? []).reduce((a, r) => a + r.puntos, 0);
+  const ptsCuenta = ventana.reduce((a, d) => a + sumaDia(d), 0);
+  const diasCuenta = ventana.length;
+  const pct = diasCuenta > 0 && maxDia > 0 ? Math.max(0, (ptsCuenta / (diasCuenta * maxDia)) * 100) : null;
   const pctFinal = disponibles.length > 0 && maxDia > 0 ? (total / (disponibles.length * maxDia)) * 100 : 0;
 
   const meta = disponibles.length * maxDia * (META_PCT / 100);
@@ -203,10 +213,27 @@ export function calcular(
   const ritmo = meta > 0 ? clamp((completos.length * maxDia * (RITMO_PCT / 100)) / meta) : 0;
 
   const sinAnotar = !registros.some((r) => r.nino_id === nino.id);
-  const nivel = sinAnotar ? OBSERVACION : nivelPorPct(pct === null ? null : Math.min(pct, 100));
+  const nivelBase = sinAnotar ? OBSERVACION : nivelPorPct(pct === null ? null : Math.min(pct, 100));
+
+  // Consecuencias que no se diluyen: un tropiezo reciente pone techo al nivel, aunque el % sea alto.
+  const retrosFechas = registros.filter((r) => r.nino_id === nino.id && r.tipo === 'retroceso').map((r) => r.fecha);
+  const ultimoRetro = retrosFechas.filter((f) => f <= hoy).sort().pop() ?? null;
+  const retrosEn14 = retrosFechas.filter((f) => f <= hoy && diffDays(f, hoy) < 14).length;
+  let nivel = nivelBase;
+  let tope: Stats['tope'] = null;
+  const idx = (n: Nivel) => NIVELES.findIndex((v) => v.id === n.id);
+  if (nivelBase.id !== 'observacion') {
+    if (retrosEn14 >= 3 && idx(nivelBase) > 1) {
+      nivel = NIVELES[1];
+      tope = { motivo: 'varios', diasRestantes: Math.max(1, 14 - diffDays(retrosFechas.filter((f) => f <= hoy && diffDays(f, hoy) < 14).sort()[0], hoy)) };
+    } else if (ultimoRetro && diffDays(ultimoRetro, hoy) < TOPE_DIAS && idx(nivelBase) > 2) {
+      nivel = NIVELES[2];
+      tope = { motivo: 'reciente', diasRestantes: TOPE_DIAS - diffDays(ultimoRetro, hoy) };
+    }
+  }
   const siguiente = siguienteNivel(nivel);
   let faltan: number | null = null;
-  if (siguiente && diasCuenta > 0) {
+  if (siguiente && diasCuenta > 0 && !tope) {
     faltan = Math.max(0, Math.ceil((diasCuenta * maxDia * siguiente.desde) / 100 - ptsCuenta));
   }
 
@@ -258,10 +285,11 @@ export function calcular(
     return m;
   })();
   const bonosTotal = registros.filter((r) => r.nino_id === nino.id && r.tipo === 'bono').length;
-  const hayPerfecto = dias.some((d) => d.diarios >= 5 && d.retro === 0);
+  const nDiarios = habitos.filter((h) => h.tipo === 'diario').length;
+  const hayPerfecto = dias.some((d) => d.diarios >= nDiarios && d.retro === 0);
 
   const insignias: Insignia[] = [
-    { id: 'perfecto', emoji: '🌟', nombre: 'Día perfecto', pista: 'Cumple los 5 deberes en un día', ganada: hayPerfecto },
+    { id: 'perfecto', emoji: '🌟', nombre: 'Día perfecto', pista: `Cumple los ${nDiarios} deberes en un día`, ganada: hayPerfecto },
     { id: 'racha', emoji: '🔥', nombre: 'Racha de 3', pista: '3 días buenos seguidos', ganada: maxRacha >= 3 },
     { id: 'ayudante', emoji: '🧑‍🍳', nombre: 'Ayudante de Santa', pista: '5 ayudas extra', ganada: bonosTotal >= 5 },
     { id: 'paz', emoji: '🕊️', nombre: 'Paz en casa', pista: '5 días seguidos sin peleas', ganada: maxPaz >= 5 },
@@ -284,6 +312,9 @@ export function calcular(
     reparadoHoy,
     dias,
     insignias,
+    diasVentana: diasCuenta,
+    tope,
+    pctNochebuena: pct === null ? pctFinal : (pctFinal + Math.min(pct, 100)) / 2,
     pctFinal,
     hoyHechos,
     bonosHoy,

@@ -100,27 +100,58 @@ export default function DetalleNino() {
           <>
             <Tile etiqueta="Puntos" valor={String(s.total)} emoji="⭐" />
             <Tile etiqueta="Racha" valor={`${s.racha}`} emoji="🔥" />
-            {grande && s.pct !== null && <Tile etiqueta="Cumplido" valor={`${Math.round(Math.min(s.pct, 100))}%`} emoji="🎯" />}
+            {grande && s.pct !== null && <Tile etiqueta="Últimas 2 semanas" valor={`${Math.round(Math.min(s.pct, 100))}%`} emoji="🎯" />}
           </>
         )}
       </section>
 
-      {!peque && s.siguiente && s.faltanParaSiguiente !== null && s.faltanParaSiguiente > 0 && (
-        <p className="text-center text-sm text-muted">
-          Te faltan <b className="text-gold">{s.faltanParaSiguiente} puntos</b> para ser {s.siguiente.emoji} {s.siguiente.nombre}.
-        </p>
-      )}
+      <section className="card p-4" aria-label="Tu nivel en las últimas dos semanas">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <h2 className="text-lg font-semibold">Tu nivel</h2>
+          <NivelPill nivel={s.nivel} tono={nino.tono} />
+        </div>
+        {s.pct === null ? (
+          <p className="text-sm text-muted">Tu nivel aparece cuando termine tu primer día. ¡Hoy se empieza a contar!</p>
+        ) : (
+          <>
+            <div className="relative h-4 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(Math.min(s.pct, 100))} aria-label="Nivel de las últimas dos semanas">
+              <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(2, Math.min(s.pct, 100))}%`, background: `linear-gradient(90deg, ${t.soft}, ${t.c})` }} />
+              {NIVELES.slice(1).map((n) => (
+                <span key={n.id} className="absolute top-0 h-full w-0.5 bg-white/40" style={{ left: `${n.desde}%` }} aria-hidden />
+              ))}
+            </div>
+            <div className="relative mt-1 h-5 text-xs text-muted" aria-hidden>
+              {NIVELES.slice(1).map((n) => (
+                <span key={n.id} className="absolute -translate-x-1/2" style={{ left: `${n.desde}%` }}>{n.emoji}</span>
+              ))}
+            </div>
+            {s.tope ? (
+              <p className="mt-2 rounded-2xl bg-coal/15 px-3 py-2 text-sm text-coal">
+                🪨 {s.tope.motivo === 'varios' ? 'Hubo varios tropiezos en 2 semanas' : 'Un tropiezo reciente'} te mantiene como {s.nivel.emoji} {s.nivel.nombre}
+                {s.tope.diasRestantes === 1 ? ' un día más' : ` ${s.tope.diasRestantes} días más`}. Sin tropiezos, vuelves a subir.
+              </p>
+            ) : (
+              s.siguiente && s.faltanParaSiguiente !== null && s.faltanParaSiguiente > 0 && (
+                <p className="mt-2 text-center text-sm text-muted">
+                  Te faltan <b className="text-gold">{s.faltanParaSiguiente} puntos</b> para ser {s.siguiente.emoji} {s.siguiente.nombre}.
+                </p>
+              )
+            )}
+            <p className="mt-2 text-center text-xs text-muted">Lo que hagas hoy cuenta durante 2 semanas.</p>
+          </>
+        )}
+      </section>
 
       <section className="card p-4" aria-label="Hoy">
         <h2 className="mb-3 text-lg font-semibold">{lejos ? 'Mientras estás lejos' : 'Hoy'}</h2>
         {lejos ? (
           <p className="text-gold-soft">
             {s.proximaVisita
-              ? `🛷 Te espero el ${fmtDia(s.proximaVisita.desde, { weekday: 'long', day: 'numeric', month: 'long' })}.`
-              : 'Santa te tiene presente aunque estés lejos.'}
+              ? `🛷 Te esperamos el ${fmtDia(s.proximaVisita.desde, { weekday: 'long', day: 'numeric', month: 'long' })}.`
+              : 'Los duendes te tienen presente aunque estés lejos.'}
           </p>
         ) : (
-          <ul className="grid grid-cols-5 gap-2">
+          <ul className="grid grid-cols-3 gap-2">
             {diarios.map((h) => {
               const hecho = s.hoyHechos.has(h.id);
               return (
@@ -194,7 +225,7 @@ export default function DetalleNino() {
       </section>
 
       <section className="card p-4" aria-label="Últimas cosas que anotó Santa">
-        <h2 className="mb-3 text-lg font-semibold">Lo último que anotó Santa</h2>
+        <h2 className="mb-3 text-lg font-semibold">Lo último que anotamos</h2>
         {ultimos.length === 0 ? (
           <p className="text-muted">Todavía no hay nada anotado. ¡Hoy es un buen día para empezar!</p>
         ) : (
@@ -218,7 +249,7 @@ export default function DetalleNino() {
 
       <section className="card p-4" aria-label="Los niveles de Santa">
         <h2 className="mb-1 text-lg font-semibold">Los niveles de Santa</h2>
-        <p className="mb-3 text-sm text-muted">Cada nivel trae una sorpresa distinta en Nochebuena. ¡Tú decides cuál! El % se calcula sobre el máximo de las tareas diarias; las ayudas extra y los ⚡ suman por encima.</p>
+        <p className="mb-3 text-sm text-muted">Cada nivel trae una sorpresa distinta en Nochebuena. ¡Tú decides cuál! El % cuenta tus últimas 2 semanas sobre el máximo de las tareas diarias; las ayudas extra y los ⚡ suman por encima.</p>
         <ul className="flex flex-col gap-2">
           {NIVELES.map((n) => {
             const actual = n.id === s.nivel.id;
@@ -236,7 +267,7 @@ export default function DetalleNino() {
         </ul>
         {finalDia && (
           <p className="mt-4 rounded-2xl bg-gold/15 p-3 text-center text-gold-soft">
-            🎄 {veredicto(s.pctFinal).titulo}: {veredicto(s.pctFinal).detalle}
+            🎄 {veredicto(s.pctNochebuena).titulo}: {veredicto(s.pctNochebuena).detalle}
           </p>
         )}
       </section>

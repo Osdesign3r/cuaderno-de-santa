@@ -203,6 +203,22 @@ function Panel({ token, onBloquear }: { token: string; onBloquear: (m?: string) 
   const nRep = delDia.filter((r) => r.tipo === 'reparacion').length;
   const ptsDia = delDia.reduce((a, r) => a + r.puntos, 0);
 
+  const huboRetroDia = delDia.some((r) => r.tipo === 'retroceso');
+  const pendientesDia = diarios.filter((h) => !hechos.has(h.id) && !(h.clave === 'paz' && huboRetroDia)).length;
+
+  // Días sin anotar (los 3 anteriores y, de noche, hoy): después de 3 días ya no se pueden registrar y cuentan cero.
+  const horaBogota = Number(new Date().toLocaleString('en-US', { timeZone: TZ, hour: 'numeric', hour12: false })) % 24;
+  const sinAnotar: { n: Nino; i: number; f: string }[] = [];
+  for (const n of ninos) {
+    const vs = visitas.filter((v) => v.nino_id === n.id);
+    for (let i = 3; i >= 0; i--) {
+      const f = addDays(hoy, -i);
+      if (f < cfg.inicio || f > cfg.fin || !enCasaEl(n, vs, f)) continue;
+      if (i === 0 && horaBogota < 19) continue;
+      if (!registros.some((r) => r.nino_id === n.id && r.fecha === f)) sinAnotar.push({ n, i, f });
+    }
+  }
+
   const fallo = (e?: string) => {
     if (e === 'sesion') return onBloquear(ERRORES.sesion);
     setAviso({ t: ERRORES[e ?? 'red'] ?? 'No se pudo guardar.', mal: true });
@@ -223,6 +239,36 @@ function Panel({ token, onBloquear }: { token: string; onBloquear: (m?: string) 
     setPend((p) => {
       const n = new Set(p);
       n.delete(k);
+      return n;
+    });
+  }
+
+  async function marcarDiaCompleto() {
+    if (pend.has('completo')) return;
+    const huboRetro = delDia.some((r) => r.tipo === 'retroceso');
+    const faltan = diarios.filter((h) => !hechos.has(h.id) && !(h.clave === 'paz' && huboRetro));
+    if (faltan.length === 0) return;
+    setPend((p) => new Set(p).add('completo'));
+    let puestos = 0;
+    for (const h of faltan) {
+      const r = await api.registrar(token, nino.slug, h.clave, fecha);
+      if (!r.ok) {
+        if (r.error !== 'hubo_retroceso') {
+          fallo(r.error);
+          break;
+        }
+        continue;
+      }
+      puestos++;
+    }
+    if (puestos > 0) {
+      navigator.vibrate?.(20);
+      setAviso({ t: `✅ ${nino.nombre}: ${puestos} ${puestos === 1 ? 'deber anotado' : 'deberes anotados'}`, mal: false });
+    }
+    await recargar();
+    setPend((p) => {
+      const n = new Set(p);
+      n.delete('completo');
       return n;
     });
   }
@@ -268,6 +314,27 @@ function Panel({ token, onBloquear }: { token: string; onBloquear: (m?: string) 
         <p className="card p-4 text-center text-gold-soft" role="status">
           ✏️ La temporada de Santa empieza el {fmtDia(cfg.inicio, { weekday: 'long', day: 'numeric', month: 'long' })}. Desde ese día podrás registrar.
         </p>
+      )}
+
+      {sinAnotar.length > 0 && (
+        <section className="card p-3" style={{ borderColor: 'rgba(255,138,91,0.5)' }} aria-label="Días sin anotar">
+          <p className="mb-2 text-sm font-medium text-coal">⏰ Sin anotar (un día sin anotar cuenta cero)</p>
+          <div className="flex flex-wrap gap-2">
+            {sinAnotar.map(({ n, i, f }) => (
+              <button
+                key={`${n.id}${f}`}
+                onClick={() => {
+                  setSlug(n.slug);
+                  setAtras(i);
+                }}
+                className="min-h-12 rounded-full bg-white/10 px-4 text-sm active:scale-95"
+              >
+                {n.emoji} {n.nombre} · {i === 0 ? 'hoy' : i === 1 ? 'ayer' : fmtDia(f, { weekday: 'short', day: 'numeric' })}
+                {i === 3 ? ' ⚠️ último día' : ''}
+              </button>
+            ))}
+          </div>
+        </section>
       )}
 
       <div className="grid grid-cols-3 gap-2" role="tablist" aria-label="Niño">
@@ -332,6 +399,15 @@ function Panel({ token, onBloquear }: { token: string; onBloquear: (m?: string) 
             <ChipH key={h.id} h={h} nino={nino} hecho={hechos.has(h.id)} deshabilitado={bloqueado} cargando={pend.has(`${nino.slug}:${h.clave}`)} onClick={() => void marcar(h)} color={t.c} soft={t.soft} />
           ))}
         </div>
+        {pendientesDia > 0 && (
+          <button
+            onClick={() => void marcarDiaCompleto()}
+            disabled={bloqueado || pend.has('completo')}
+            className="mt-2 min-h-12 w-full rounded-2xl bg-gold font-semibold text-night-900 active:scale-95 disabled:opacity-40"
+          >
+            {pend.has('completo') ? 'Anotando…' : `✅ Todo cumplido (${pendientesDia} ${pendientesDia === 1 ? 'falta' : 'faltan'})`}
+          </button>
+        )}
       </Grupo>
 
       <Grupo titulo={`Ayudante de Santa · ${nBonos}/${cfg.maxBonosDia}`}>
