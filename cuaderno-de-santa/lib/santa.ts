@@ -46,11 +46,11 @@ export const NIVELES: Nivel[] = [
 /** Antes de la primera anotación Santa solo observa: no hay nivel que dar. No forma parte de la escalera. */
 export const OBSERVACION: Nivel = { id: 'observacion', nombre: 'En observación', emoji: '🔭', desde: 0 };
 
-/** Umbral (en % del máximo posible) donde termina el camino: el nivel más alto. */
 /** Días que miden el nivel, y días que un tropiezo pone techo (Favorito de Santa) al nivel. */
 export const VENTANA_DIAS = 14;
 export const TOPE_DIAS = 7;
 
+/** Umbral (en % del máximo posible) donde termina el camino: el nivel más alto. */
 export const META_PCT = 90;
 /** Ritmo que marca la estrella fantasma: el umbral de "Lista Buena". */
 export const RITMO_PCT = 70;
@@ -166,7 +166,6 @@ export function calcular(
   // Piso: 0 para todos; para quien visita (Oriana), el total con el que arrancó la visita actual.
   let total = 0;
   let piso = 0;
-  const acum = new Map<string, number>();
   const dias: DiaInfo[] = [];
   for (const d of temporada) {
     if (!nino.siempre_en_casa && visitas.some((v) => v.desde === d)) piso = total;
@@ -183,7 +182,6 @@ export function calcular(
         if (e.tipo === 'diario') diarios++;
       }
     }
-    acum.set(d, total);
     dias.push({
       fecha: d,
       enCasa: enCasaEl(nino, visitas, d),
@@ -194,8 +192,6 @@ export function calcular(
     });
   }
 
-  const ayer = addDays(hoy, -1);
-  const hastaAyer = ayer < cfg.inicio ? 0 : (acum.get(ayer > cfg.fin ? cfg.fin : ayer) ?? 0);
   // El nivel mide las últimas 2 semanas (no toda la temporada): así cada día pesa igual en octubre que en diciembre
   // y un mal día se nota (y se puede remontar). El trineo, en cambio, sí es el viaje completo.
   // Hoy cuenta desde la primera anotación, para que el niño vea si avanza: se mide contra lo ya hecho

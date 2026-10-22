@@ -39,7 +39,12 @@ export function Vigilancia({ hoy, cfg }: { hoy: string; cfg: Config }) {
   // Las pupilas siguen el puntero/dedo; si nadie toca, vuelven a mirar alrededor solas.
   useEffect(() => {
     let reposo: ReturnType<typeof setTimeout> | undefined;
+    let cuadro = 0;
     const mover = (e: PointerEvent) => {
+      if (cuadro) return;
+      cuadro = requestAnimationFrame(() => {
+        cuadro = 0;
+      });
       const el = ojos.current;
       if (!el) return;
       const r = el.getBoundingClientRect();
@@ -60,6 +65,7 @@ export function Vigilancia({ hoy, cfg }: { hoy: string; cfg: Config }) {
     return () => {
       window.removeEventListener('pointermove', mover);
       window.removeEventListener('pointerdown', mover);
+      cancelAnimationFrame(cuadro);
       clearTimeout(reposo);
     };
   }, []);
@@ -91,7 +97,7 @@ export function Vigilancia({ hoy, cfg }: { hoy: string; cfg: Config }) {
         <span className="mb-1 text-3xl">🎄</span>
       </div>
 
-      <p key={i} className="mensaje-duendes mx-auto mt-1 min-h-[3.25rem] max-w-xs text-center text-lg font-medium leading-snug text-gold-soft" aria-live="polite">
+      <p key={i} className="mensaje-duendes mx-auto mt-1 min-h-[3.25rem] max-w-xs text-center text-lg font-medium leading-snug text-gold-soft">
         {MENSAJES[i]}
       </p>
 

@@ -101,9 +101,10 @@ export function musicaActiva() {
 export async function iniciarMusica() {
   const c = contexto();
   if (!c) return false;
-  if (c.state === 'suspended') await c.resume();
   if (sonando) return true;
-  sonando = true;
+  sonando = true; // antes del await: dos toques seguidos no deben programar la melodía dos veces
+  if (c.state === 'suspended') await c.resume();
+  if (!sonando) return false; // la apagaron mientras se despertaba el audio
   programar();
   return true;
 }

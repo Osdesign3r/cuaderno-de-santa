@@ -159,11 +159,12 @@ export default function DetalleNino() {
                   <span
                     className="flex h-14 w-14 items-center justify-center rounded-2xl text-3xl"
                     style={hecho ? { background: t.soft, boxShadow: `0 0 0 2px ${t.c}, 0 0 14px ${t.glow}` } : { background: 'rgba(255,255,255,0.06)', opacity: 0.55 }}
+                    role="img"
                     aria-label={`${nombreHabito(h, nino)}: ${hecho ? 'hecho' : 'pendiente'}`}
                   >
                     {hecho ? '✅' : h.emoji}
                   </span>
-                  {!peque && <span className="text-[11px] leading-tight text-muted">{nombreHabito(h, nino)}</span>}
+                  {!peque && <span className="text-xs leading-tight text-muted">{nombreHabito(h, nino)}</span>}
                 </li>
               );
             })}
@@ -187,12 +188,13 @@ export default function DetalleNino() {
             {semana.map((d) => {
               const dow = new Date(`${d.fecha}T12:00:00Z`).getUTCDay();
               const simbolo = !d.enCasa ? '–' : d.retro > 0 ? '🪨' : d.bueno ? '⭐' : d.diarios > 0 ? '✨' : d.fecha === hoy ? '·' : '○';
+              const estado = !d.enCasa ? 'lejos de casa' : d.retro > 0 ? 'con un tropiezo' : d.bueno ? 'día bueno' : d.diarios > 0 ? 'con algunos deberes' : d.fecha === hoy ? 'en marcha' : 'sin anotar';
               return (
                 <li key={d.fecha} className="flex flex-col items-center gap-1">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/8 text-xl" style={d.fecha === hoy ? { boxShadow: `0 0 0 2px ${t.c}` } : undefined}>
+                  <span role="img" aria-label={`${fmtDia(d.fecha, { weekday: 'long' })}: ${estado}`} className="flex h-11 w-11 items-center justify-center rounded-full bg-white/8 text-xl" style={d.fecha === hoy ? { boxShadow: `0 0 0 2px ${t.c}` } : undefined}>
                     {simbolo}
                   </span>
-                  <span className="text-xs text-muted">{INICIAL[dow]}</span>
+                  <span aria-hidden className="text-xs text-muted">{INICIAL[dow]}</span>
                 </li>
               );
             })}
@@ -216,8 +218,8 @@ export default function DetalleNino() {
           <ul className="grid grid-cols-4 gap-2">
             {(peque ? ganadas : s.insignias).map((i) => (
               <li key={i.id} className="flex flex-col items-center gap-1 text-center" title={i.pista}>
-                <span className={`flex h-14 w-14 items-center justify-center rounded-2xl text-3xl ${i.ganada ? 'bg-gold/20 ring-2 ring-gold' : 'bg-white/5 opacity-40 grayscale'}`}>{i.emoji}</span>
-                {!peque && <span className="text-[11px] leading-tight text-muted">{i.ganada ? i.nombre : i.pista}</span>}
+                <span role="img" aria-label={`${i.nombre}: ${i.ganada ? 'ganada' : `por ganar (${i.pista})`}`} className={`flex h-14 w-14 items-center justify-center rounded-2xl text-3xl ${i.ganada ? 'bg-gold/20 ring-2 ring-gold' : 'bg-white/5 opacity-40 grayscale'}`}>{i.emoji}</span>
+                {!peque && <span className="text-xs leading-tight text-muted">{i.ganada ? i.nombre : i.pista}</span>}
               </li>
             ))}
           </ul>

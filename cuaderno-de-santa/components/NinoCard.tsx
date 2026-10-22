@@ -15,7 +15,7 @@ export function NinoCard({ nino, s }: { nino: Nino; s: Stats }) {
       href={`/nino/${nino.slug}`}
       className="card block p-4 transition-transform active:scale-[0.98]"
       style={{ borderColor: t.soft, boxShadow: `0 10px 30px -12px ${t.glow}` }}
-      aria-label={`Ver el cuaderno de ${nino.nombre}`}
+      aria-label={`Ver el cuaderno de ${nino.nombre}: ${s.nivel.nombre}, ${s.total} puntos${s.racha > 0 ? `, racha de ${s.racha} días` : ''}${s.carbon > 0 ? ', con carbón en el trineo' : ''}`}
     >
       <div className="flex items-center gap-4">
         <Avatar emoji={nino.emoji} tono={nino.tono} size={72} />
@@ -28,8 +28,8 @@ export function NinoCard({ nino, s }: { nino: Nino; s: Stats }) {
           <div className="mt-2 flex items-center justify-between gap-2 text-sm text-muted">
             {peque ? <StarsRow n={Math.floor(s.total / 10)} max={6} size="text-base" /> : <span className="font-medium text-ink">⭐ {s.total} puntos</span>}
             <span className="flex items-center gap-2">
-              {s.racha > 0 && <span aria-label={`Racha de ${s.racha} días`}>🔥 {s.racha}</span>}
-              {s.carbon > 0 && <span aria-label="Hay carbón en el trineo">🪨</span>}
+              {s.racha > 0 && <span aria-hidden>🔥 {s.racha}</span>}
+              {s.carbon > 0 && <span aria-hidden>🪨</span>}
             </span>
           </div>
         </div>
