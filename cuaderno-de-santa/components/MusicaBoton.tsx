@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { detenerMusica, iniciarMusica } from '@/lib/sonido';
+import { Icono } from './Icon';
 
 const CLAVE = 'santa_musica';
 
@@ -31,7 +32,20 @@ export function MusicaBoton() {
     setOn(true);
     const arrancar = () => void iniciarMusica();
     window.addEventListener('pointerdown', arrancar, { once: true });
-    return () => window.removeEventListener('pointerdown', arrancar);
+    // En segundo plano no debe seguir sonando (batería y sorpresas en el bolsillo); al volver, el próximo toque la retoma.
+    const alCambiar = () => {
+      if (document.visibilityState === 'hidden') {
+        detenerMusica();
+        window.removeEventListener('pointerdown', arrancar);
+      } else if (leer()) {
+        window.addEventListener('pointerdown', arrancar, { once: true });
+      }
+    };
+    document.addEventListener('visibilitychange', alCambiar);
+    return () => {
+      window.removeEventListener('pointerdown', arrancar);
+      document.removeEventListener('visibilitychange', alCambiar);
+    };
   }, []);
 
   async function alternar() {
@@ -52,9 +66,9 @@ export function MusicaBoton() {
       onClick={() => void alternar()}
       aria-label={on ? 'Apagar música navideña' : 'Encender música navideña'}
       aria-pressed={on}
-      className="fixed right-3 top-[max(0.75rem,env(safe-area-inset-top))] z-20 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-xl backdrop-blur active:scale-95"
+      className={`fixed right-3 top-[max(0.75rem,env(safe-area-inset-top))] z-20 flex h-12 w-12 items-center justify-center rounded-full backdrop-blur transition-colors active:scale-95 ${on ? 'bg-gold text-night-900' : 'bg-white/15 text-ink'}`}
     >
-      {on ? '🎵' : '🔇'}
+      <Icono nombre={on ? 'musica' : 'silencio'} />
     </button>
   );
 }

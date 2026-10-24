@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Icono } from './Icon';
 
 type Props = {
   titulo: string;
@@ -36,6 +37,7 @@ export function PinPad({ titulo, subtitulo, mensaje, deshabilitado, onCompleto }
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return; // Ctrl+1, Cmd+2… son atajos del navegador, no del PIN
       if (/^[0-9]$/.test(e.key)) void digito(e.key);
       if (e.key === 'Backspace') setPin((p) => p.slice(0, -1));
     };
@@ -50,7 +52,7 @@ export function PinPad({ titulo, subtitulo, mensaje, deshabilitado, onCompleto }
 
       <div className="my-6 flex gap-3" aria-label={`${pin.length} de 6 números`} role="img">
         {Array.from({ length: 6 }, (_, i) => (
-          <span key={i} className={`h-4 w-4 rounded-full border-2 border-gold transition-colors ${i < pin.length ? 'bg-gold' : 'bg-transparent'}`} />
+          <span key={i} aria-hidden className={`h-4 w-4 rounded-full border-2 border-gold transition-colors ${i < pin.length ? 'bg-gold' : 'bg-transparent'}`} />
         ))}
       </div>
 
@@ -64,12 +66,12 @@ export function PinPad({ titulo, subtitulo, mensaje, deshabilitado, onCompleto }
             {d}
           </button>
         ))}
-        <span />
+        <span aria-hidden />
         <button onClick={() => void digito('0')} disabled={ocupado || deshabilitado} className="card min-h-16 text-2xl font-medium active:scale-95 disabled:opacity-40">
           0
         </button>
-        <button onClick={() => setPin((p) => p.slice(0, -1))} aria-label="Borrar" className="card min-h-16 text-xl active:scale-95">
-          ⌫
+        <button onClick={() => setPin((p) => p.slice(0, -1))} disabled={ocupado} aria-label="Borrar último número" className="card flex min-h-16 items-center justify-center text-muted active:scale-95 disabled:opacity-40">
+          <Icono nombre="borrar" size={26} />
         </button>
       </div>
     </div>

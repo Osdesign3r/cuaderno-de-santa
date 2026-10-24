@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Vigilancia } from '@/components/Vigilancia';
 import { NinoCard } from '@/components/NinoCard';
+import { Icono } from '@/components/Icon';
 import { Cargando, ErrorCaja } from '@/components/ui';
 import { useSanta, useStats } from '@/lib/data';
 
@@ -17,7 +18,6 @@ export default function Inicio() {
         <h1 className="mt-1 text-4xl font-semibold leading-tight">
           El Cuaderno <span className="text-gold">de Santa</span>
         </h1>
-        
       </header>
 
       {datos && hoy && <Vigilancia hoy={hoy} cfg={datos.cfg} />}
@@ -32,9 +32,9 @@ export default function Inicio() {
         </section>
       )}
 
-      <nav className="fixed inset-x-0 bottom-0 flex justify-center pb-[max(1rem,env(safe-area-inset-bottom))]">
-        <Link href="/padres" className="rounded-full bg-white/10 px-5 py-3 text-sm text-muted backdrop-blur active:scale-95">
-          🔒 Padres
+      <nav aria-label="Zona de padres" className="pointer-events-none fixed inset-x-0 bottom-0 flex justify-center pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <Link href="/padres" className="pointer-events-auto inline-flex min-h-12 items-center gap-2 rounded-full bg-night-800/90 px-5 text-sm text-muted ring-1 ring-white/15 backdrop-blur active:scale-95">
+          <Icono nombre="candado" size={18} /> Padres
         </Link>
       </nav>
     </main>

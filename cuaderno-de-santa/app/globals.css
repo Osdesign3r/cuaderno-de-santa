@@ -19,6 +19,7 @@ html,
 body {
   background: #0a1030;
   color: var(--color-ink);
+  color-scheme: dark; /* selector de fechas, scrollbars y teclado nativos en oscuro */
 }
 
 body {
@@ -29,11 +30,12 @@ body {
   overscroll-behavior-y: none;
 }
 
+/* Sin backdrop-filter: con 10 tarjetas sobre un cielo animado hacía trabarse el scroll en celulares modestos.
+   El fondo casi opaco tapa las estrellas detrás del texto igual que el desenfoque. */
 .card {
-  background: rgba(255, 255, 255, 0.06);
+  background: linear-gradient(rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.06)), rgba(10, 16, 48, 0.82);
   border: 1px solid rgba(255, 255, 255, 0.11);
   border-radius: 1.5rem;
-  backdrop-filter: blur(6px);
 }
 
 .pill {
@@ -55,13 +57,13 @@ a {
 :focus-visible {
   outline: 3px solid var(--color-gold);
   outline-offset: 3px;
-  border-radius: 0.75rem;
 }
 
 .star {
   position: absolute;
   border-radius: 9999px;
   background: var(--color-gold-soft);
+  opacity: 0.6;
   animation: twinkle 4s ease-in-out infinite;
 }
 

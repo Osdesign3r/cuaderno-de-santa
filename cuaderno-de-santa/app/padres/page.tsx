@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Icono } from '@/components/Icon';
 import { PinPad } from '@/components/PinPad';
 import { TONOS } from '@/components/tono';
 import { Avatar, Cargando, ErrorCaja } from '@/components/ui';
@@ -178,6 +179,7 @@ function Panel({ token, onBloquear }: { token: string; onBloquear: (m?: string) 
 
   const { ninos, habitos, registros, visitas, cfg } = datos;
   const nino = ninos.find((n) => n.slug === slug) ?? ninos[0];
+  if (!nino) return <ErrorCaja texto="Todavía no hay niños en la lista de Santa." onReintentar={() => void recargar()} />;
   const s = stats[nino.slug];
   const t = TONOS[nino.tono];
   const fecha = addDays(hoy, -atras);
@@ -301,8 +303,8 @@ function Panel({ token, onBloquear }: { token: string; onBloquear: (m?: string) 
       <div className="flex items-center justify-between">
         <Link href="/" className="inline-flex min-h-12 items-center rounded-full bg-white/10 px-4 text-sm text-muted">← Tablero</Link>
         <div className="flex gap-2">
-          <button onClick={() => setAjustes((a) => !a)} aria-label="Ajustes" aria-expanded={ajustes} className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-lg">⚙️</button>
-          <button onClick={() => onBloquear()} aria-label="Bloquear panel" className="flex h-12 items-center gap-1 rounded-full bg-white/10 px-4 text-sm">🔒 Salir</button>
+          <button onClick={() => setAjustes((a) => !a)} aria-label="Ajustes" aria-expanded={ajustes} className={`flex h-12 w-12 items-center justify-center rounded-full active:scale-95 ${ajustes ? 'bg-gold text-night-900' : 'bg-white/10'}`}><Icono nombre="ajustes" /></button>
+          <button onClick={() => onBloquear()} aria-label="Bloquear panel" className="flex h-12 items-center gap-2 rounded-full bg-white/10 px-4 text-sm active:scale-95"><Icono nombre="candado" size={18} /> Salir</button>
         </div>
       </div>
 
@@ -337,14 +339,13 @@ function Panel({ token, onBloquear }: { token: string; onBloquear: (m?: string) 
         </section>
       )}
 
-      <div className="grid grid-cols-3 gap-2" role="tablist" aria-label="Niño">
+      <div className="grid grid-cols-3 gap-2" role="group" aria-label="Niño">
         {ninos.map((n) => {
           const act = n.id === nino.id;
           return (
             <button
               key={n.id}
-              role="tab"
-              aria-selected={act}
+              aria-pressed={act}
               onClick={() => setSlug(n.slug)}
               className="card flex min-h-20 flex-col items-center justify-center gap-1 p-2 active:scale-95"
               style={act ? { boxShadow: `0 0 0 2px ${TONOS[n.tono].c}, 0 0 18px ${TONOS[n.tono].glow}` } : { opacity: 0.7 }}
@@ -477,7 +478,7 @@ function Panel({ token, onBloquear }: { token: string; onBloquear: (m?: string) 
                   <span className="flex-1 text-sm">{h ? nombreHabito(h, nino) : '—'}{r.nota === 'primero' && <span title="Fue el primero" aria-label="primero del día"> ⚡</span>}</span>
                   <span className={`text-sm font-semibold ${r.puntos < 0 ? 'text-coal' : 'text-ok'}`}>{r.puntos > 0 ? '+' : ''}{r.puntos}</span>
                   <span className="text-xs text-muted">{hora(r.created_at)}</span>
-                  <button onClick={() => void quitar(r)} aria-label={`Quitar ${h?.nombre ?? 'registro'}`} disabled={pend.has(`q:${r.id}`)} className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-lg active:scale-90">×</button>
+                  <button onClick={() => void quitar(r)} aria-label={`Quitar ${h?.nombre ?? 'registro'}`} disabled={pend.has(`q:${r.id}`)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/10 active:scale-90 disabled:opacity-40"><Icono nombre="cerrar" size={20} /></button>
                 </li>
               );
             })}
@@ -547,7 +548,7 @@ function Visitas({ nino, token, visitas, cfg, recargar, fallo }: { nino: Nino; t
 
   return (
     <details className="card p-4">
-      <summary className="cursor-pointer text-sm font-semibold uppercase tracking-wider text-muted">Visitas de {nino.nombre} ({ordenadas.length})</summary>
+      <summary className="flex min-h-12 cursor-pointer items-center text-sm font-semibold uppercase tracking-wider text-muted">Visitas de {nino.nombre} ({ordenadas.length})</summary>
       <ul className="mt-3 flex flex-col gap-2">
         {ordenadas.map((v) => (
           <li key={v.id} className="flex items-center gap-3 rounded-2xl bg-white/5 px-3 py-2 text-sm">
@@ -556,7 +557,7 @@ function Visitas({ nino, token, visitas, cfg, recargar, fallo }: { nino: Nino; t
               {v.hasta !== v.desde && ` → ${fmtDia(v.hasta, { weekday: 'short', day: 'numeric', month: 'short' })}`}
               {v.nota && <span className="block text-xs text-muted">{v.nota}</span>}
             </span>
-            <button onClick={() => void borrar(v.id)} aria-label="Borrar visita" className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10">🗑️</button>
+            <button onClick={() => void borrar(v.id)} aria-label="Borrar visita" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/10 active:scale-90"><Icono nombre="papelera" size={20} /></button>
           </li>
         ))}
       </ul>
@@ -625,7 +626,7 @@ function EditorAvatar({ nino, token, onBloquear, recargar }: { nino: Nino; token
       </div>
       <div className="mt-2 flex gap-2" role="group" aria-label="Color">
         {TONOS_OP.map((t) => (
-          <button key={t.id} onClick={() => { setTono(t.id); setMsg(null); }} aria-pressed={t.id === tono} aria-label={t.id} className={`h-10 w-10 rounded-full ${t.id === tono ? 'ring-2 ring-white' : ''}`} style={{ background: t.c }} />
+          <button key={t.id} onClick={() => { setTono(t.id); setMsg(null); }} aria-pressed={t.id === tono} aria-label={`Color ${t.id}`} className={`h-11 w-11 rounded-full ${t.id === tono ? 'ring-2 ring-white ring-offset-2 ring-offset-night-900' : ''}`} style={{ background: t.c }} />
         ))}
       </div>
       {msg && <p className="mt-2 text-sm text-gold" role="status">{msg}</p>}
@@ -652,13 +653,15 @@ function Ajustes({ token, onBloquear, ninos, recargar }: { token: string; onBloq
     <section className="card p-4">
       <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted">Íconos de los niños</h2>
       {ninos.map((n) => (
-        <EditorAvatar key={n.id + n.emoji + n.tono} nino={n} token={token} onBloquear={onBloquear} recargar={recargar} />
+        <EditorAvatar key={n.id} nino={n} token={token} onBloquear={onBloquear} recargar={recargar} />
       ))}
     </section>
     <section className="card p-4">
       <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted">Cambiar PIN</h2>
       <input
+        type="password"
         inputMode="numeric"
+        autoComplete="new-password"
         pattern="[0-9]*"
         maxLength={6}
         value={nuevo}

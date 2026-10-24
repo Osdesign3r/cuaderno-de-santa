@@ -49,16 +49,21 @@ export function useSanta() {
   const [hoy, setHoy] = useState('');
   const [error, setError] = useState<string | null>(null);
   const vivo = useRef(true);
+  const secuencia = useRef(0);
+  const ultimaCarga = useRef(0);
 
   const recargar = useCallback(async () => {
+    // Si una carga más nueva ya salió, la respuesta de esta (más lenta) se descarta: no revive datos viejos.
+    const mia = ++secuencia.current;
+    ultimaCarga.current = Date.now();
     try {
       const d = await cargar();
-      if (!vivo.current) return;
+      if (!vivo.current || mia !== secuencia.current) return;
       setDatos(d);
       setHoy(hoyBogota());
       setError(null);
     } catch {
-      if (vivo.current) setError('No pude hablar con el Polo Norte. Revisa la conexión.');
+      if (vivo.current && mia === secuencia.current) setError('No pude hablar con el Polo Norte. Revisa la conexión.');
     }
   }, []);
 
@@ -66,8 +71,9 @@ export function useSanta() {
     vivo.current = true;
     setHoy(hoyBogota());
     void recargar();
+    // focus + visibilitychange suelen dispararse juntos al volver a la app: una sola carga.
     const visible = () => {
-      if (document.visibilityState === 'visible') void recargar();
+      if (document.visibilityState === 'visible' && Date.now() - ultimaCarga.current > 5_000) void recargar();
     };
     const t = setInterval(visible, 30_000);
     document.addEventListener('visibilitychange', visible);
